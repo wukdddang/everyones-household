@@ -1,6 +1,6 @@
-# React + TypeScript + Vite
+# Everyones-Household
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 나만의 가계부 작성하기 어플리케이션
 
 Currently, two official plugins are available:
 
