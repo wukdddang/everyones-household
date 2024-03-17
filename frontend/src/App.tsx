@@ -20,7 +20,7 @@ ChartJS.register(
   Legend
 );
 
-import HouseHoldTable from "./components/HouseHoldTable/HouseHoldTable";
+import HouseHold from "./components/HouseHold/HouseHold";
 import { Bar } from "react-chartjs-2";
 
 import "./App.css";
@@ -91,7 +91,7 @@ function App() {
 
   return (
     <div>
-      <HouseHoldTable csvData={csvData} />
+      <HouseHold csvData={csvData} />
 
       <h1>나의 가계부</h1>
       <Bar
@@ -114,13 +114,12 @@ function App() {
         }}
       />
 
-      <div style={{ textAlign: "center", marginTop: "20px" }}>
+      <div className="text-center mt-5">
         <h1>이번 달 남은 금액은</h1>
         <h2
-          style={{
-            fontSize: "48px",
-            color: remainingAmount >= 0 ? "green" : "red",
-          }}
+          className={`text-4xl ${
+            remainingAmount >= 0 ? "text-green-500" : "text-red-500"
+          }`}
         >
           {remainingAmount.toLocaleString()}원
         </h2>
