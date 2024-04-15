@@ -3,7 +3,8 @@ import Cookies from "js-cookie";
 
 export const client = (() =>
   axios.create({
-    baseURL: "http://localhost:3000/",
+    // baseURL: "http://localhost:3000/",
+    baseURL: "https://everyones-household-frontend.vercel.app/",
     timeout: 20000,
     headers: {
       "Access-Control-Allow-Origin": "*",

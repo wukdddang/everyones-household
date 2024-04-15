@@ -62,7 +62,7 @@ function App() {
     `${year}-${initialMonth.toString().padStart(2, "0")}`
   );
   const context = useHousehold({ date: formattedMonth });
-  console.log(context);
+  // console.log(context);
 
   // 월 선택 드롭다운에서 사용할 월 목록 생성
   const months = Array.from({ length: 12 }, (_, i) =>

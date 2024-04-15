@@ -53,13 +53,17 @@ const HouseHold = ({ csvData }) => {
 
   const onSubmit = async (values: z.infer<typeof FormSchema>) => {
     try {
-      const response = await fetch("http://localhost:3000/api/save", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
+      // const response = await fetch("http://localhost:3000/api/save", {
+      const response = await fetch(
+        "https://everyones-household-frontend.vercel.app/api/save",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to save data: ${response.status}`);
