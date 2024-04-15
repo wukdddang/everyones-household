@@ -58,9 +58,9 @@ const HouseHoldAddForm = ({ form, onSubmit }) => {
                           )}
                         >
                           {field.value ? (
-                            format(field.value, "PPP")
+                            format(field.value, "yyyy-MM-dd") // 날짜 포맷을 yyyy-MM-dd로 변경
                           ) : (
-                            <span>Pick a date</span>
+                            <span>날짜를 선택하세요</span>
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>

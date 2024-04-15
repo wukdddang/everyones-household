@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import Papa from "papaparse";
 
 import {
   Chart as ChartJS,
@@ -11,6 +10,19 @@ import {
   Legend,
 } from "chart.js";
 
+import HouseHold from "./components/HouseHold/HouseHold";
+import { Bar } from "react-chartjs-2";
+
+import "./App.css";
+import useHousehold from "./hooks/useHousehold";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./common/components/ui/select";
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -20,110 +32,136 @@ ChartJS.register(
   Legend
 );
 
-import HouseHold from "./components/HouseHold/HouseHold";
-import { Bar } from "react-chartjs-2";
-
-import "./App.css";
-
 function App() {
   const [chartData, setChartData] = useState({
-    datasets: [],
+    labels: [],
+    datasets: [
+      {
+        label: "지출",
+        data: [],
+        backgroundColor: "rgba(255, 99, 132, 0.5)",
+        borderColor: "rgba(255, 99, 132, 1)",
+        borderWidth: 1,
+      },
+      {
+        label: "수입",
+        data: [],
+        backgroundColor: "rgba(75, 192, 192, 0.5)",
+        borderColor: "rgba(75, 192, 192, 1)",
+        borderWidth: 1,
+      },
+    ],
   });
-  const [csvData, setCsvData] = useState([]);
-  const [remainingAmount, setRemainingAmount] = useState(0);
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const today = new Date();
+  const year = today.getFullYear();
+
+  // 초기 설정으로 현재 월을 선택
+  const initialMonth = today.getMonth() + 1; // getMonth는 0-11을 반환하므로 1을 추가
+  const [formattedMonth, setFormattedMonth] = useState(
+    `${year}-${initialMonth.toString().padStart(2, "0")}`
+  );
+  const context = useHousehold({ date: formattedMonth });
+  console.log(context);
+
+  // 월 선택 드롭다운에서 사용할 월 목록 생성
+  const months = Array.from({ length: 12 }, (_, i) =>
+    `${i + 1}`.padStart(2, "0")
+  );
 
   useEffect(() => {
-    Papa.parse("/2024-03.csv", {
-      download: true,
-      header: true,
-      complete: (result) => {
-        const data = result.data;
-        setCsvData(data);
-        const categories = [...new Set(data.map((item) => item.카테고리))];
+    if (!context.isLoading) {
+      const categoryAmountMap = {};
 
-        let totalIncome = 0;
-        let totalExpense = 0;
+      context.data.forEach((item) => {
+        const category = item.category;
+        const expense = parseInt(item.expense, 10) || 0;
+        const income = parseInt(item.income, 10) || 0;
 
-        const financials = categories.map((category) => {
-          let categoryIncome = 0;
-          let categoryExpense = 0;
+        // 기존 값에 지출은 빼고 수입은 더함으로써 한 카테고리 내에서 처리
+        categoryAmountMap[category] =
+          (categoryAmountMap[category] || 0) - expense + income;
+      });
 
-          data.forEach((item) => {
-            if (item.카테고리 === category) {
-              const income =
-                item.수입 && !isNaN(item.수입.replace(/,/g, ""))
-                  ? parseInt(item.수입.replace(/,/g, ""), 10)
-                  : 0;
-              const expense =
-                item.지출 && !isNaN(item.지출.replace(/,/g, ""))
-                  ? parseInt(item.지출.replace(/,/g, ""), 10)
-                  : 0;
+      const labels = Object.keys(categoryAmountMap);
+      const amountData = labels.map((label) => categoryAmountMap[label]);
 
-              categoryIncome += income;
-              categoryExpense += expense;
-            }
-          });
+      setChartData({
+        labels,
+        datasets: [
+          {
+            label: "수입/지출",
+            data: amountData,
+            backgroundColor: labels.map((label) =>
+              categoryAmountMap[label] >= 0
+                ? "rgba(75, 192, 192, 0.5)"
+                : "rgba(255, 99, 132, 0.5)"
+            ),
+            borderColor: labels.map((label) =>
+              categoryAmountMap[label] >= 0
+                ? "rgba(75, 192, 192, 1)"
+                : "rgba(255, 99, 132, 1)"
+            ),
+            borderWidth: 1,
+          },
+        ],
+      });
+    }
+  }, [context.data, context.isLoading]);
 
-          // 여기서 전체 수입과 지출을 계산합니다.
-          totalIncome += categoryIncome;
-          totalExpense += categoryExpense;
+  // Select 컴포넌트에서 월을 변경할 때마다 실행
+  const handleMonthChange = (newMonth) => {
+    setSelectedMonth(newMonth);
+    setFormattedMonth(`${year}-${newMonth}`);
+  };
 
-          return categoryIncome - categoryExpense;
-        });
-
-        // 여기에서 남은 금액(순수입)을 계산하고 상태를 설정합니다.
-        const balance = totalIncome - totalExpense;
-        setRemainingAmount(balance);
-
-        setChartData({
-          labels: categories,
-          datasets: [
-            {
-              label: "카테고리별 순수입(수입 - 지출)",
-              data: financials,
-              backgroundColor: "rgba(54, 162, 235, 0.5)",
-            },
-          ],
-        });
-      },
-    });
-  }, []);
+  if (context.isFetching) {
+    return <div>Loading...</div>;
+  } else if (context.isError) {
+    return <div>Error: {context.error.message}</div>;
+  }
 
   return (
     <div>
-      <HouseHold csvData={csvData} />
-
-      <h1>나의 가계부</h1>
+      <HouseHold csvData={context.data} />
+      <Select
+        value={selectedMonth}
+        onValueChange={handleMonthChange}
+        placeholder="월 선택"
+      >
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="month" disabled>
+            월 선택
+          </SelectItem>
+          {months.map((month) => (
+            <SelectItem key={month} value={month}>
+              {month}월
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <h1 className="text-[20px] font-bold text-left tracking-[-0.1em]">
+        나의 가계부
+      </h1>
       <Bar
         data={chartData}
+        height={100}
         options={{
-          scales: { y: { beginAtZero: true } },
-
           onClick: (event, elements) => {
-            if (elements.length === 0) return; // 클릭된 막대가 없을 경우
-
-            const elementIndex = elements[0].index; // 첫 번째 클릭된 요소의 인덱스
-            const category = chartData.labels[elementIndex]; // 클릭된 카테고리
-            const amount = chartData.datasets[0].data[elementIndex]; // 클릭된 카테고리의 금액
-
-            // 여기에서 필요한 정보를 표시합니다. 예: 콘솔에 출력
+            if (elements.length === 0) {
+              return;
+            }
+            const datasetIndex = elements[0].datasetIndex;
+            const elementIndex = elements[0].index;
+            const category = chartData.labels[elementIndex];
+            const amount = chartData.datasets[datasetIndex].data[elementIndex];
             console.log(`카테고리: ${category}, 금액: ${amount}`);
-
-            // 이 정보를 사용하여 모달을 띄우거나 페이지 내의 다른 요소를 업데이트할 수 있습니다.
           },
         }}
       />
-
-      <div className="text-center mt-5">
-        <h1>이번 달 남은 금액은</h1>
-        <h2
-          className={`text-4xl ${
-            remainingAmount >= 0 ? "text-green-500" : "text-red-500"
-          }`}
-        >
-          {remainingAmount.toLocaleString()}원
-        </h2>
-      </div>
     </div>
   );
 }

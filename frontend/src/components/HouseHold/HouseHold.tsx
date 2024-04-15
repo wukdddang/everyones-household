@@ -51,16 +51,35 @@ const HouseHold = ({ csvData }) => {
     },
   });
 
-  function onSubmit(values: z.infer<typeof FormSchema>) {
-    toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-        </pre>
-      ),
-    });
-  }
+  const onSubmit = async (values: z.infer<typeof FormSchema>) => {
+    try {
+      const response = await fetch("http://localhost:3000/api/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save data: ${response.status}`);
+      }
+
+      // const result = await response.text();
+      // console.log(values);
+      toast({
+        title: "저장되었습니다.",
+        description: "성공적으로 저장되었습니다.",
+      });
+    } catch (error) {
+      toast({
+        title: "저장에 실패했습니다.",
+        description: error.message,
+      });
+    }
+  };
+
+  // console.log(csvData);
 
   return (
     <Popover>

@@ -6,8 +6,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/common/components/ui/table";
+import { format } from "date-fns";
 
 const HouseHoldTable = ({ csvData }) => {
+  // console.log(csvData);
   return (
     <Table>
       <TableHeader>
@@ -21,16 +23,22 @@ const HouseHoldTable = ({ csvData }) => {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {csvData.map((item, index) => (
-          <TableRow key={index}>
-            <TableCell>{item.날짜}</TableCell>
-            <TableCell>{item.항목}</TableCell>
-            <TableCell>{item.카테고리}</TableCell>
-            <TableCell>{item.수입}</TableCell>
-            <TableCell>{item.지출}</TableCell>
-            <TableCell>{item.비고}</TableCell>
+        {csvData && csvData.length > 0 ? (
+          csvData.map((item, index) => (
+            <TableRow key={index}>
+              <TableCell>{format(item.formattedDate, "yyyy-MM-dd")}</TableCell>
+              <TableCell>{item.title}</TableCell>
+              <TableCell>{item.category}</TableCell>
+              <TableCell>{item.income || "-"}</TableCell>
+              <TableCell>{item.expense || "-"}</TableCell>
+              <TableCell>{item.notes || "-"}</TableCell>
+            </TableRow>
+          ))
+        ) : (
+          <TableRow>
+            <TableCell colSpan="6">해당 월의 데이터가 없습니다.</TableCell>
           </TableRow>
-        ))}
+        )}
       </TableBody>
     </Table>
   );
